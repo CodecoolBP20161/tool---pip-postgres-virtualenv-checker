@@ -14,18 +14,37 @@ def check_package_version(package):
 
 
 def main():
+    problem = False
+
     postgres_version = check_package_version('postgresql')
     if postgres_version is None:
-        print('postgresql package is not installed! Install it with "sudo apt install postgresql postgresql-contrib"')
+        problem = True
+        print(' - postgresql package is not missing! Install it with "sudo apt install postgresql postgresql-contrib"')
     else:
-        print('postgresql ' + postgres_version + ' installed')
         postgres_contrib_version = check_package_version('postgresql-contrib')
         if postgres_contrib_version is None:
-            print('postgresql-contrib package is not installed! Install it with "sudo apt install postgresql-contrib"')
+            problem = True
+            print(' - postgresql-contrib package is not missing! Install it with "sudo apt install postgresql-contrib"')
         else:
-            print('postgresql-contrib ' + postgres_contrib_version + ' installed')
             if postgres_version != postgres_contrib_version:
-                print('postgresql and postgresql-contrib versions not match! Please update them!')
+                problem = True
+                print(' - postgresql and postgresql-contrib versions not match! Please update them!')
 
+    is_postgres_user_exist = 'postgres' in run(['cut', '-d:', '-f1', '/etc/passwd'])
+    if not is_postgres_user_exist:
+        problem = True
+        print(' - postgres user does not exist!')
+
+    if 'psql' not in run(['which', 'psql']):
+        problem = True
+        print(' - psql command is not found!')
+
+    if problem:
+        print('The test found the above problems, please fix them!')
+        exit(1)
+    else:
+        print('postgresql ' + postgres_version + ' installed')
+        print('postgresql-contrib ' + postgres_contrib_version + ' installed')
+        print('Test ran successfully! Everything is OK!')
 
 main()
